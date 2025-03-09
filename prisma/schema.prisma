@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  role          UserRole       @default(CUSTOMER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
+  messages      Message[]
+  websites      Website[]      // Websites owned by the user
+  notifications Notification[]
+}
+
+model Website {
+  id            String         @id @default(cuid())
+  name          String
+  domain        String
+  ownerId       String
+  user          User          @relation(fields: [ownerId], references: [id])
+  conversations Conversation[]
+  notifications Notification[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Conversation {
+  id         String      @id @default(cuid())
+  title      String?
+  websiteId  String?     // ID of the website if it's a widget conversation
+  visitorId  String?     // ID of the visitor if it's a widget conversation
+  ipAddress  String?     // IP address of the visitor
+  country    String?     // Country of the visitor
+  website    Website?    @relation(fields: [websiteId], references: [id])
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  status     ChatStatus  @default(ACTIVE)
+  messages   Message[]
+  users      User[]
+
+  @@index([ipAddress])
+  @@index([country])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  content        String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
+  sender         User?        @relation(fields: [senderId], references: [id])
+  senderId       String?
+  senderType     SenderType   @default(USER)
+  visitorId      String?      // For messages from website visitors
+
+  @@index([senderId])
+  @@index([visitorId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // e.g., 'NEW_VISITOR'
+  message   String
+  read      Boolean  @default(false)
+  websiteId String?
+  user      User     @relation(fields: [userId], references: [id])
+  website   Website? @relation(fields: [websiteId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+  CUSTOMER
+}
+
+enum ChatStatus {
+  ACTIVE
+  CLOSED
+  PENDING
+}
+
+enum SenderType {
+  USER
+  VISITOR
+} 
