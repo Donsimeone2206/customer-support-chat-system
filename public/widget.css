@@ -114,4 +114,81 @@
 
 .chat-widget-submit:hover {
   background-color: #2563eb;
+}
+
+/* Widget animations */
+@keyframes message-appear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-message-appear {
+  animation: message-appear 0.3s ease-out;
+}
+
+/* Custom scrollbar */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Typing animation */
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+/* Message transitions */
+.max-w-\[70\%\] {
+  transition: opacity 0.2s ease-out;
+}
+
+/* Hover effects */
+.hover\:bg-blue-600:hover {
+  transition: background-color 0.2s ease-out;
+}
+
+/* Focus styles */
+.focus\:border-blue-500:focus {
+  transition: border-color 0.2s ease-out;
+}
+
+/* Smooth scrollbar for messages container */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+/* Focus outline for better accessibility */
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Transition for interactive elements */
+.transition-all {
+  transition: all 0.2s ease-in-out;
 } 

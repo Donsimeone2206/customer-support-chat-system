@@ -57,12 +57,15 @@ model Message {
   id             String       @id @default(cuid())
   content        String
   createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  readAt         DateTime?    // When the message was read by the recipient is null
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   conversationId String
   sender         User?        @relation(fields: [senderId], references: [id])
   senderId       String?
   senderType     SenderType   @default(USER)
   visitorId      String?      // For messages from website visitors
+  attachment     Json?        // For file attachments (url, filename, contentType, size)
 
   @@index([senderId])
   @@index([visitorId])

@@ -60,15 +60,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { userId } = await auth()
-    const { content, conversationId } = await request.json()
+    const { content, conversationId, websiteId } = await request.json()
 
     if (!userId) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
+    // Create message
     const message = await prisma.message.create({
       data: {
         content,
+        senderType: 'USER',
         sender: {
           connect: {
             id: userId,
@@ -86,17 +88,32 @@ export async function POST(request: Request) {
             name: true,
           },
         },
+        conversation: true,
       },
     })
 
-    // Trigger Pusher event
-    await pusher.trigger('chat', 'message', {
+    // Trigger Pusher events for both admin and visitor channels
+    const messageData = {
       id: message.id,
       content: message.content,
       createdAt: message.createdAt,
       senderId: userId,
-      senderName: message.sender?.name,
-    })
+      senderType: 'USER',
+      conversationId: message.conversationId,
+      visitorId: message.visitorId,
+    };
+
+    console.log('Triggering Pusher events for websiteId:', websiteId);
+    console.log('Message data:', messageData);
+
+    await Promise.all([
+      // Trigger for admin channel
+      pusher.trigger(`chat-admin-${websiteId}`, 'message', messageData),
+      // Trigger for visitor channel
+      pusher.trigger(`chat-${websiteId}`, 'message', messageData),
+    ])
+
+    console.log('Pusher events triggered successfully');
 
     return NextResponse.json(message)
   } catch (error) {

@@ -27,7 +27,6 @@ export async function GET(
       script.src = '${protocol}://${host}/widget.js';
       script.defer = true;
       script.onload = function() {
-        // Initialize widget with website ID
         window.ChatWidget.init('${params.websiteId}');
       };
       document.head.appendChild(script);

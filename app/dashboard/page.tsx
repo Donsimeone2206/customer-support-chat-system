@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server'
+import { auth, clerkClient } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import ChatList from '../components/ChatList'
 import ChatWindow from '../components/ChatWindow'
@@ -18,17 +18,20 @@ export default async function Dashboard() {
   })
 
   if (!dbUser) {
+    // update with clerk user details 
+    const clerk = await clerkClient()
+    const clerkUser = await clerk.users.getUser(userId)
     await prisma.user.create({
       data: {
         id: userId,
-        email: 'pending@example.com', // Will be updated on first action
-        name: 'New User',
+        email: clerkUser.emailAddresses[0].emailAddress,
+        name: clerkUser.fullName,
       }
     })
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-100">
       {/* Sidebar with chat list */}
       <div className="w-1/4 bg-white border-r">
         <ChatList userId={userId} />

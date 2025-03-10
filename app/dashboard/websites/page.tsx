@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface Website {
@@ -17,6 +17,15 @@ export default function WebsitesPage() {
   const [newWebsite, setNewWebsite] = useState({ name: '', domain: '' })
   const [selectedWebsite, setSelectedWebsite] = useState<Website | null>(null)
 
+  useEffect(() => {
+    const fetchWebsites = async () => {
+      const response = await fetch('/api/websites')
+      const data = await response.json()
+      setWebsites(data)
+    } 
+    fetchWebsites()
+  }, [])
+  
   const handleCreateWebsite = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -42,16 +51,36 @@ export default function WebsitesPage() {
   }
 
   const getWidgetCode = (websiteId: string) => {
-    const widgetUrl = `${window.location.protocol}//${window.location.host}/widget.bundle.js`
+    
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const apiBaseUrl = isDevelopment
+      ? 'http://localhost:3001'  
+      : 'https://chat-support-system.vercel.app'; 
+    
+    const widgetUrl = `${apiBaseUrl}/widget.bundle.js`;
+    
     return `
 <!-- Chat Widget Dependencies -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2/dist/tailwind.min.css" rel="stylesheet">
+
 <!-- Chat Widget -->
 <script>
   (function() {
+    const getBaseUrl = () => {
+      const currentScript = document.currentScript;
+      const scriptSrc = currentScript?.src || '';
+      const isDevelopment = ${isDevelopment};
+      
+      if (isDevelopment) {
+        return 'http://localhost:3001';
+      }
+      
+      return'https://chat-support-system.vercel.app';
+    };
+
     function loadScript(url, websiteId) {
       return new Promise((resolve, reject) => {
         const script = document.createElement('script');
@@ -95,10 +124,12 @@ export default function WebsitesPage() {
         await waitForDependencies();
         console.log('Dependencies loaded, loading widget script...');
         
+        const baseUrl = getBaseUrl();
+        console.log('Using base URL:', baseUrl);
+        
         await loadScript("${widgetUrl}", "${websiteId}");
         console.log('Widget script loaded');
 
-        // Wait for the widget script to execute and define ChatWidget
         const waitForWidget = () => new Promise((resolve, reject) => {
           let attempts = 0;
           const maxAttempts = 50;
@@ -120,8 +151,19 @@ export default function WebsitesPage() {
 
         console.log('Waiting for ChatWidget to be available...');
         const widget = await waitForWidget();
-        console.log('ChatWidget found, initializing...');
-        await widget.init();
+        console.log('ChatWidget found, initializing with config:', {
+          websiteId: "${websiteId}",
+          pusherKey: "${process.env.NEXT_PUBLIC_PUSHER_APP_KEY}",
+          pusherCluster: "${process.env.NEXT_PUBLIC_PUSHER_CLUSTER}",
+          baseUrl
+        });
+        
+        await widget.init({
+          websiteId: "${websiteId}",
+          pusherKey: "${process.env.NEXT_PUBLIC_PUSHER_APP_KEY}",
+          pusherCluster: "${process.env.NEXT_PUBLIC_PUSHER_CLUSTER}",
+          baseUrl
+        });
         console.log('Widget initialized successfully');
       } catch (error) {
         console.error('Widget initialization failed:', error);

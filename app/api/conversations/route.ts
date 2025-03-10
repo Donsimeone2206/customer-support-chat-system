@@ -12,11 +12,20 @@ export async function GET() {
 
     const conversations = await prisma.conversation.findMany({
       where: {
-        users: {
-          some: {
-            id: userId,
+        OR: [
+          {
+            users: {
+              some: {
+                id: userId,
+              },
+            },
           },
-        },
+          {
+            website: {
+              ownerId: userId,
+            },
+          },
+        ],
       },
       orderBy: {
         updatedAt: 'desc',
@@ -28,6 +37,13 @@ export async function GET() {
           },
           take: 1,
         },
+        website: {
+          select: {
+            id: true,
+            name: true,
+            domain: true,
+          },
+        },
       },
     })
 
@@ -37,6 +53,12 @@ export async function GET() {
       status: conv.status,
       updatedAt: conv.updatedAt,
       lastMessage: conv.messages[0]?.content,
+      websiteId: conv.website?.id,
+      website: conv.website,
+      ipAddress: conv.ipAddress,
+      country: conv.country,
+      visitorId: conv.visitorId,
+      messages: [], // Initialize with empty array, will be populated when conversation is selected
     }))
 
     return NextResponse.json(formattedConversations)

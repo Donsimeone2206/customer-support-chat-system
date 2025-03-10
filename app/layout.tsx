@@ -18,7 +18,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={inter.className}>
-          <main className="min-h-screen bg-gray-100">
+          <main className="min-h-screen bg-gray-100 text-slate-900">
             {children}
           </main>
         </body>
